@@ -3,7 +3,7 @@
 
 ## App Intent
 
-This simple app is intended to help people begin to visualize what a typical EV Charging session looks like. They can adjust parameters like charging speed, time spent charging, and cost to get an idea of how that affects their vehicle. They can adjust starting SoC and adjust Vehicle parameters if desrired (default is based on Hyundai IONIQ 5 SEL RWD).
+This [simple web app](https://ev-charging-calculator-cbc8.figma.site/) is intended to help people begin to visualize what a typical EV Charging session looks like. They can adjust parameters like charging speed, time spent charging, and cost to get an idea of how that affects their vehicle. They can adjust starting SoC and adjust Vehicle parameters if desrired (default is based on Hyundai IONIQ 5 SEL RWD).
 
 ## Next steps
 - Create some helpful graphs and charts for better visualization.
