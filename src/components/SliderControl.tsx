@@ -14,6 +14,7 @@ interface SliderControlProps {
   formatValue?: (value: number) => string;
   annotations?: { position: number; label: string }[];
   onRangeChange?: (min: number, max: number) => void;
+  isTimeInput?: boolean; // New prop to enable hours/minutes input
 }
 
 export function SliderControl({
@@ -28,9 +29,12 @@ export function SliderControl({
   formatValue,
   annotations,
   onRangeChange,
+  isTimeInput = false,
 }: SliderControlProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
+  const [editHours, setEditHours] = useState("");
+  const [editMinutes, setEditMinutes] = useState("");
   const [isEditingRange, setIsEditingRange] = useState(false);
   const [editMin, setEditMin] = useState("");
   const [editMax, setEditMax] = useState("");
@@ -38,21 +42,40 @@ export function SliderControl({
   const displayValue = formatValue ? formatValue(value) : value.toString();
 
   const handleEditClick = () => {
-    setEditValue(value.toString());
+    if (isTimeInput) {
+      const hours = Math.floor(value);
+      const minutes = Math.round((value - hours) * 60);
+      setEditHours(hours.toString());
+      setEditMinutes(minutes.toString());
+    } else {
+      setEditValue(value.toString());
+    }
     setIsEditing(true);
   };
 
   const handleSave = () => {
-    const numValue = parseFloat(editValue);
-    if (!isNaN(numValue) && numValue >= min && numValue <= max) {
-      onChange(numValue);
-      setIsEditing(false);
+    if (isTimeInput) {
+      const hours = parseInt(editHours) || 0;
+      const minutes = parseInt(editMinutes) || 0;
+      const totalHours = hours + minutes / 60;
+      if (totalHours >= min && totalHours <= max) {
+        onChange(totalHours);
+        setIsEditing(false);
+      }
+    } else {
+      const numValue = parseFloat(editValue);
+      if (!isNaN(numValue) && numValue >= min && numValue <= max) {
+        onChange(numValue);
+        setIsEditing(false);
+      }
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditValue("");
+    setEditHours("");
+    setEditMinutes("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -186,17 +209,45 @@ export function SliderControl({
         <div className="flex items-center justify-center gap-2 pt-2">
           {isEditing ? (
             <>
-              <input
-                type="number"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="w-24 px-2 py-1 text-center border border-border rounded bg-input-background"
-                min={min}
-                max={max}
-                step={step}
-                autoFocus
-              />
+              {isTimeInput ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={editHours}
+                    onChange={(e) => setEditHours(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-16 px-2 py-1 text-center border border-border rounded bg-input-background"
+                    min="0"
+                    max={Math.floor(max)}
+                    placeholder="0"
+                    autoFocus
+                  />
+                  <span className="text-foreground/60">h</span>
+                  <input
+                    type="number"
+                    value={editMinutes}
+                    onChange={(e) => setEditMinutes(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-16 px-2 py-1 text-center border border-border rounded bg-input-background"
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                  />
+                  <span className="text-foreground/60">m</span>
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="w-24 px-2 py-1 text-center border border-border rounded bg-input-background"
+                  min={min}
+                  max={max}
+                  step={step}
+                  autoFocus
+                />
+              )}
               <button
                 onClick={handleSave}
                 className="p-1 hover:bg-muted rounded transition-colors"

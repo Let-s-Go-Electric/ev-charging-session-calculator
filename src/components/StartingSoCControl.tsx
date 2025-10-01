@@ -2,19 +2,22 @@ import { useState } from "react";
 import { Slider } from "./ui/slider";
 import { Pencil, X, Check } from "lucide-react";
 import { VehicleSettings } from "./VehicleSettingsDialog";
+import { DistanceUnit, convertDistance, getDistanceUnitLabel } from "./utils/unitConversions";
 
 interface StartingSoCControlProps {
   value: number; // Always stored as percentage (0-100)
   onChange: (value: number) => void;
   vehicleSettings: VehicleSettings;
+  distanceUnit: DistanceUnit;
 }
 
-type SoCUnit = "percentage" | "miles" | "kwh";
+type SoCUnit = "percentage" | "distance" | "kwh";
 
 export function StartingSoCControl({
   value,
   onChange,
   vehicleSettings,
+  distanceUnit,
 }: StartingSoCControlProps) {
   const [unit, setUnit] = useState<SoCUnit>("percentage");
   const [isEditing, setIsEditing] = useState(false);
@@ -27,8 +30,9 @@ export function StartingSoCControl({
         return percentage;
       case "kwh":
         return (percentage / 100) * vehicleSettings.batteryCapacity;
-      case "miles":
-        return (percentage / 100) * vehicleSettings.rangeAtFull;
+      case "distance":
+        const miles = (percentage / 100) * vehicleSettings.rangeAtFull;
+        return convertDistance(miles, distanceUnit);
     }
   };
 
@@ -39,8 +43,9 @@ export function StartingSoCControl({
         return val;
       case "kwh":
         return (val / vehicleSettings.batteryCapacity) * 100;
-      case "miles":
-        return (val / vehicleSettings.rangeAtFull) * 100;
+      case "distance":
+        const rangeAtFullConverted = convertDistance(vehicleSettings.rangeAtFull, distanceUnit);
+        return (val / rangeAtFullConverted) * 100;
     }
   };
 
@@ -53,8 +58,9 @@ export function StartingSoCControl({
         return { min: 0, max: 100, step: 1 };
       case "kwh":
         return { min: 0, max: vehicleSettings.batteryCapacity, step: 0.1 };
-      case "miles":
-        return { min: 0, max: vehicleSettings.rangeAtFull, step: 1 };
+      case "distance":
+        const maxRange = convertDistance(vehicleSettings.rangeAtFull, distanceUnit);
+        return { min: 0, max: maxRange, step: 1 };
     }
   };
 
@@ -67,8 +73,8 @@ export function StartingSoCControl({
         return `${val.toFixed(0)}%`;
       case "kwh":
         return `${val.toFixed(1)} kWh`;
-      case "miles":
-        return `${val.toFixed(0)} mi`;
+      case "distance":
+        return `${val.toFixed(0)} ${getDistanceUnitLabel(distanceUnit)}`;
     }
   };
 
@@ -125,14 +131,15 @@ export function StartingSoCControl({
           <span className="sm:hidden">%</span>
         </button>
         <button
-          onClick={() => setUnit("miles")}
+          onClick={() => setUnit("distance")}
           className={`flex-1 px-2 sm:px-3 py-2 transition-colors border-r border-border ${
-            unit === "miles"
+            unit === "distance"
               ? "bg-primary text-primary-foreground"
               : "bg-card hover:bg-muted"
           }`}
         >
-          Miles
+          <span className="hidden sm:inline">{distanceUnit === "km" ? "Kilometers" : "Miles"}</span>
+          <span className="sm:hidden">{getDistanceUnitLabel(distanceUnit)}</span>
         </button>
         <button
           onClick={() => setUnit("kwh")}
